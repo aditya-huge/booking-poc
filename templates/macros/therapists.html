@@ -1,0 +1,33 @@
+{% macro therapists_list(therapists=[], center_id="", category_id="", service_id="") %}
+  {% if therapists | length > 0 %}
+    <article class="component">
+      <h3>Therapists</h3>
+      <div class="content">
+        {% for therapist in therapists %}
+          {% set query_params = {
+            "therapist_id": therapist["id"],
+            "category_id": category_id,
+            "service_id": service_id
+          } %}
+          <a
+            role="button"
+            class="therapist outline secondary"
+            href="/centers/{{center_id}}/schedules?{{ query_params | to_query_params }}"
+          >
+            {{therapist.personal_info.name}}
+          </a>
+        {% endfor %}
+      </div>
+    </article>
+  {% endif %}
+{% endmacro %}
+
+{% macro therapist_details(therapist={}) %}
+  {% if therapist %}
+    <article>
+      <h3>{{therapist.catalog_info.display_name}}</h3>
+    </article>
+  {% else %}
+    <article>No therapist information provided</article>
+  {% endif %}
+{% endmacro %}

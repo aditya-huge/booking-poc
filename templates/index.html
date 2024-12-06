@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% from 'macros/dropdown.html' import render_dropdown %}
+
+{% block title %}{{title}}{% endblock %}
+
+{% block content %}
+  <main class="container-fluid">
+  <hgroup>
+    <h2>Let's book and appointment</h2>
+    <p>This proccess will allow you to book a appointment</p>
+  </hgroup>
+  {{render_dropdown(centers, "Please select a location")}}
+  </main>
+{% endblock %}

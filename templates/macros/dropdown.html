@@ -1,0 +1,20 @@
+{% macro render_dropdown(options, label='Select an option', id='dropdown') %}
+    {#-
+        Renders Pico CSS dropdown component based on an array of objects.
+
+        :param options: List of objects, each containing 'display_name' and 'id' keys.
+        :param label: The label for the Pico CSS dropdown component. Defaults to 'Select an option'.
+        :param id: The id of the Pico CSS dropdown component.
+        :return: A string containing the HTML for the Pico CSS dropdown component.
+    -#}
+  <details class="dropdown" id="{{dropdown}}">
+    <summary>{{label}}</summary>
+      <ul>
+        {% for option in options %}
+          {% if option.id and option.name %}
+            <li><a href="centers/{{option.id}}">{{ option.name }}</a></li>
+          {% endif %}
+        {% endfor %}
+      </ul>
+    </details>
+{% endmacro %}

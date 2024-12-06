@@ -1,0 +1,34 @@
+{% macro service_details(service={}) %}
+    <article>
+      {% if service.name and service["price_info"]["currency_id"] %}
+        <h3>
+          {{service.name }} - $ {{service["price_info"]["currency_id"] | float }}
+        </h3>
+      {% endif %}
+      {% if service.description %}
+        {{service.description}}
+      {% else %}
+        Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+      {% endif %}
+    </article>
+{% endmacro %}
+
+{% macro list_addons(addons=[], title="List of addons", is_open=False) %}
+  <details {% if is_open %}open{% endif %}>
+    <summary>{{title}}</summary>
+    <div class="content">
+      {% for addon in addons %}
+        <article class="addon">{{addon.name}} - <strong>${{addon["price_info"]["currency_id"] | float}}</strong></article>
+      {% endfor %}
+    </div>
+  </details>
+{% endmacro %}
+
+{% macro addons_component(addons={suggested:[], all:[]}) %}
+  <article class="component">
+    <h3>Addons</h3>
+    {{ list_addons(addons["suggested"], "Suggested addons", True) }}
+    <hr/>
+    {{ list_addons(addons["all"], "All Addons") }}
+  </article>
+{% endmacro %}
