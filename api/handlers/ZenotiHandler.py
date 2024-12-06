@@ -1,5 +1,6 @@
 import json
 import os
+import random
 from typing import Any, Dict, Optional
 from datetime import datetime, timedelta
 import requests
@@ -12,6 +13,15 @@ DEFAULT_HEADERS = {
 
 EXCLUDED_CATEGORIES = ["ADD-ON", "CHARGES & FEES", "CHARGES AND FEES"]
 ADDON_CATEGORIES = ["ADD-ON"]
+
+
+def generate_mobile_number():
+    first_digit = random.choice(
+        ["7", "8", "9"]
+    )  # Common starting digits for mobile numbers
+    remaining_digits = "".join(random.choices("0123456789", k=9))
+    mobile_number = first_digit + remaining_digits
+    return mobile_number
 
 
 class ZenotiHandler:
@@ -34,7 +44,7 @@ class ZenotiHandler:
 
     def get_center_categories(self, center_id: str, category_id=None):
         url = f"{self.root}/centers/{center_id}/categories"
-        params = {"page": 1, "type": 1, "size": 10}
+        params = {"page": 1, "type": 1, "size": 40}
         response = requests.get(url, headers=DEFAULT_HEADERS, params=params)
         data = response.json()
 
@@ -74,7 +84,7 @@ class ZenotiHandler:
         url = f"{self.root}/Centers/{center_id}/services"
         params = {
             "page": 1,
-            "size": 10,
+            "size": 50,
         }
 
         if category_id:
@@ -134,7 +144,6 @@ class ZenotiHandler:
                 center_id=center_id,
                 service_id=service_id,
                 guest_id=guest["id"],
-                therapist_id=therapist_id,
             )
             schedule: Dict[str, Any] = {
                 "center_id": center_id,
@@ -144,7 +153,8 @@ class ZenotiHandler:
                 "booking_id": booking_service["id"],
                 "slots": self._get_booking_service_slots(
                     booking_service_id=booking_service["id"]
-                ),
+                )
+                or [],
             }
 
             schedule_list.append(schedule)
@@ -160,7 +170,10 @@ class ZenotiHandler:
                 "last_name": "User",
                 "gender": "1",
                 "email": "ak@ak.com",
-                "mobile_phone": {"country_code": 225, "number": "2406886482"},
+                "mobile_phone": {
+                    "country_code": 225,
+                    "number": generate_mobile_number(),
+                },
             },
             "address_info": {
                 "address_1": "123 st",
@@ -174,13 +187,43 @@ class ZenotiHandler:
 
         return response.json()
 
+    def reserve_service_booking(self, booking_id: str, slot: str):
+        # url = "https://apistage02.zenotistage.com/api/Catalog/Appointments/ReserveSlots"
+        # url = f"{self.root}/bookings/{booking_id}/slots/reserve"
+        # payload = {"": slot}
+        #
+        # respone = requests.post(url, json=payload, headers=DEFAULT_HEADERS)
+        #
+        # return respone.json()
+        return {"id": "d42ef075-245e-49f2-bb23-f76e7cbe359a"}
+
+    def get_invoice(self, invoice_id: str):
+        url = f"{self.root}/invoices/{invoice_id}"
+        params = {"expand": "InvoiceItems"}
+
+        response = requests.get(url, params=params, headers=DEFAULT_HEADERS)
+        data = response.json()
+
+        return data["invoice"]
+
+    def invoice_apply_promo_code(
+        self, invoice_id: str, promo_code: str, center_id: str
+    ):
+        print(promo_code)
+        url = f"{self.root}/invoices/{invoice_id}/campaign_discount/apply"
+        payload = {"offer_code": promo_code, "center_id": center_id}
+
+        response = requests.post(url, data=json.dumps(payload), headers=DEFAULT_HEADERS)
+
+        print(response.json())
+        return response.json()
+
     def _create_booking_service(
         self,
         center_id: str,
         date: str,
         guest_id: str,
         service_id: str,
-        therapist_id: Optional[str],
     ):
         url = f"{self.root}/bookings"
         payload = {
@@ -200,5 +243,7 @@ class ZenotiHandler:
     def _get_booking_service_slots(self, booking_service_id: str):
         url = f"{self.root}/bookings/{booking_service_id}/slots"
         response = requests.get(url, headers=DEFAULT_HEADERS)
+
+        print(response.json())
 
         return response.json().get("slots", [])

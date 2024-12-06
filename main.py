@@ -6,7 +6,7 @@ load_dotenv()
 
 from urllib.parse import urlencode
 from datetime import datetime
-from fastapi import FastAPI, Request, Depends
+from fastapi import FastAPI, Request, Depends, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
@@ -175,7 +175,7 @@ async def view_center_schedule(
         center_id=center_id,
         therapist_id=therapist_id,
         service_id=service_id,
-        guest_id=guest_id,
+        guest=guest,
     )
     context = {
         "center": center,
@@ -185,9 +185,58 @@ async def view_center_schedule(
         "service": service,
         "therapist": therapist,
         "schedule": schedule,
-        "guest": guest_id,
+        "guest": guest,
         **center,
     }
+
     return templates.TemplateResponse(
         request=request, name="center_schedule.html", context=context
+    )
+
+
+@app.get("/centers/{center_id}/invoices")
+async def view_invoice(
+    center_id: str,
+    slot: Optional[str],
+    booking_id: Optional[str],
+    request: Request,
+    zenoti_handler: Annotated[ZenotiHandler, Depends()],
+):
+    assert slot is not None, "The `slot` query parameter should not be None"
+    assert booking_id is not None, "The `booking_id` query parameter should not be None"
+
+    new_invoice = zenoti_handler.reserve_service_booking(
+        booking_id=booking_id, slot=slot
+    )
+    print(new_invoice)
+    invoice = zenoti_handler.get_invoice(invoice_id=new_invoice["id"])
+    print(invoice)
+    center = zenoti_handler.get_center_information(center_id)
+    context = {"invoice": invoice, **center}
+    return templates.TemplateResponse(
+        request=request, name="invoice.html", context=context
+    )
+
+
+@app.post("/invoice/{invoice_id}/apply-code")
+async def apply_promo_code(
+    invoice_id: str,
+    center_id: Annotated[str, Form()],
+    promo_code: Annotated[str, Form()],
+    request: Request,
+    zenoti_handler: Annotated[ZenotiHandler, Depends()],
+):
+    invoice = zenoti_handler.get_invoice(invoice_id=invoice_id)
+    result = zenoti_handler.invoice_apply_promo_code(
+        invoice_id=invoice_id, promo_code=promo_code, center_id=center_id
+    )
+    center = zenoti_handler.get_center_information(center_id)
+    context = {
+        "promo_applied": result["discount_applied"],
+        "invoice": invoice,
+        **center,
+    }
+
+    return templates.TemplateResponse(
+        request=request, name="invoice.html", context=context
     )

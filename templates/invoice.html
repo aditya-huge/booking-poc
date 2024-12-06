@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% from 'macros/therapists.html' import therapist_details %}
+{% from 'macros/service.html' import service_details %}
+{% from 'macros/center_categories.html' import list_categories %}
+
+{% set guest = invoice["guest"] %}
+{% block title %}{{title}}{% endblock %}
+
+{% block header_styles %}
+  <style>
+    main {
+      --gap: 1.25rem;
+
+      display: flex;
+      flex-direction: row;
+      flex-wrap: wrap;
+      gap: var(--gap);
+
+      & > header {
+        flex-basis: 100%;
+      }
+
+      & > .content {
+        flex-basis: 100%;
+      }
+
+    }
+
+    .content {
+      --content-gap: 1rem;
+
+      display: flex;
+      flex-direction: row;
+      flex-wrap: wrap;
+      gap: var(--content-gap);
+
+      & > * {
+        flex-basis: 100%;
+        margin: 0;
+      }
+
+      details .content {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+
+         {
+          border: var(--pico-border-width) solid var(--pico-secondary-border);
+          box-shadow: none;
+          flex-basis: calc(50% - (var(--content-gap) / 2));
+        }
+      }
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+  <main class="container-fluid">
+    <header>
+      <hgroup>
+        <h1>{{center.name}}</h1>
+        <p>This the available information for the center</p>
+        <a href="/">Choose another location</a>
+      </hgroup>
+    </header>
+    <section class="content">
+    <article>
+      <h3>Invoice {{invoice["invoice_number_prefix"]}} {{invoice["invoice_number"]}}</h3>
+      Date: {{invoice["invoice_date"] | iso_date_to_human}}
+    </article>
+
+    <article>
+      <h3>{{guest["first_name"]}} {{guest["last_name"]}}</h3>
+      More guest information
+    </article>
+
+    {% for item in invoice["invoice_items"] %}
+      <article>
+        <h3>{{item["name"]}}</h3>
+        <h4>Service provider: {{item["therapist_name"]}}</h4>
+        <h4>Value: {{item["price"]["final"]}}</h4>
+      </article>
+    {% endfor %}
+    <article>
+        <h4>Net price: {{invoice["total_price"]["net_price"]}}</h4>
+        <h4>Taxes: {{invoice["total_price"]["tax"]}}</h4>
+        <h4>Total: {{invoice["total_price"]["sum_total"]}}</h4>
+    </article>
+    <article>
+      <h3>Apply promo code</h3>
+      <form method="post", action="/invoice/{{invoice['id']}}/apply-code">
+        <input type="hidden" name="center_id" value="{{invoice['center_id']}}">
+        <fieldset role="group">
+          <input name="promo_code" type="text" placeholder="Enter your promo code" />
+          <input type="submit" value="Apply promo code" />
+        </fieldset>
+      </form>
+    </article>
+    </section>
+  </main>
+{% endblock %}
+
+
+
